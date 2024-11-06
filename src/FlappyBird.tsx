@@ -72,43 +72,15 @@ const FlappyBird: React.FC<{ userId: string }> = ({ userId }) => {
     const jump = -6;
 
     useEffect(() => {
-        images.bird.src = '/images/flappy_bird_bird.png';
-        images.bg.src = '/images/bg.png';
-        images.fg.src = '/images/fg.png';
-        images.pipeUp.src = '/images/pipeUp.png';
-        images.pipeBottom.src = '/images/pipeBottom.png';
-    
-        const savedState = localStorage.getItem('flappyBirdState');
-        if (savedState) {
-            const parsedState = JSON.parse(savedState);
-            dispatch({ type: 'SET_SCORE', payload: parsedState.score });
-            dispatch({ type: 'SET_BIRD_Y', payload: parsedState.birdY });
-            dispatch({ type: 'SET_VELOCITY', payload: parsedState.velocity });
-            dispatch({ type: 'SET_PIPES', payload: parsedState.pipes });
-            dispatch({ type: 'SET_IS_GAME_RUNNING', payload: parsedState.isGameRunning });
-        }
-    
-        const fetchHighScores = async () => {
-            try {
-                const response = await axios.get(`${SERVER_URL}/highscores`);
-                dispatch({ type: 'SET_HIGH_SCORES', payload: response.data });
-            } catch (error) {
-                console.error("Ошибка при получении рекордов:", error);
-            }
+        const loadImages = async () => {
+            images.bird.src = await axios.get('/images/flappy_bird_bird.png', { responseType: 'blob' }).then((res) => URL.createObjectURL(res.data));
+            images.bg.src = await axios.get('/images/bg.png', { responseType: 'blob' }).then((res) => URL.createObjectURL(res.data));
+            images.fg.src = await axios.get('/images/fg.png', { responseType: 'blob' }).then((res) => URL.createObjectURL(res.data));
+            images.pipeUp.src = await axios.get('/images/pipeUp.png', { responseType: 'blob' }).then((res) => URL.createObjectURL(res.data));
+            images.pipeBottom.src = await axios.get('/images/pipeBottom.png', { responseType: 'blob' }).then((res) => URL.createObjectURL(res.data));
         };
-        fetchHighScores();
-    
-        const handleVisibilityChange = () => {
-            if (document.hidden) {
-                pauseGame();
-                saveGame();
-            }
-        };
-    
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+        loadImages();
     }, []);
-    
 
     const handleKeyDown = () => {
         if (isGameRunning) {
@@ -120,69 +92,59 @@ const FlappyBird: React.FC<{ userId: string }> = ({ userId }) => {
         dispatch({ type: 'RESET_GAME' });
     };
 
-    const pauseGame = () => {
-        dispatch({ type: 'SET_IS_GAME_RUNNING', payload: false });
-    };
+    const drawFrame = () => {
+        const ctx = canvasRef.current?.getContext("2d");
+        if (ctx && canvasRef.current) {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            ctx.drawImage(images.bg, 0, 0);
 
-    const saveGame = () => {
-        localStorage.setItem('flappyBirdState', JSON.stringify({ score, birdY, velocity, pipes, isGameRunning }));
+            pipes.forEach((pipe, index) => {
+                const pipeUpY = pipe.y;
+                const pipeBottomY = pipe.y + images.pipeUp.height + gap;
+
+                ctx.drawImage(images.pipeUp, pipe.x, pipeUpY);
+                ctx.drawImage(images.pipeBottom, pipe.x, pipeBottomY);
+
+                if (isGameRunning) pipe.x -= 2;
+
+                if (pipe.x + pipeWidth <= 0 && isGameRunning) {
+                    pipes.splice(index, 1);
+                    dispatch({ type: 'SET_SCORE', payload: score + 1 });
+                    dispatch({
+                        type: 'SET_PIPES', payload: [
+                            ...pipes,
+                            { x: canvasWidth, y: Math.floor(Math.random() * images.pipeUp.height) - images.pipeUp.height }
+                        ]
+                    });
+                }
+
+                if (
+                    (birdX + birdSize >= pipe.x && birdX <= pipe.x + pipeWidth &&
+                    (birdY <= pipeUpY + images.pipeUp.height || birdY + birdSize >= pipeBottomY)) ||
+                    birdY + birdSize >= canvasHeight - images.fg.height ||
+                    birdY <= 0
+                ) {
+                    dispatch({ type: 'SET_IS_GAME_RUNNING', payload: false });
+                    saveScore(score);
+                }
+            });
+
+            ctx.drawImage(images.fg, 0, canvasHeight - images.fg.height);
+            ctx.drawImage(images.bird, birdX, birdY);
+
+            ctx.fillStyle = "#000";
+            ctx.font = "24px Arial";
+            ctx.fillText("Счет: " + score, 10, canvasHeight - 20);
+        }
     };
 
     useEffect(() => {
-        const ctx = canvasRef.current?.getContext("2d");
-
-        const draw = () => {
-            if (ctx && canvasRef.current) {
-                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-                ctx.drawImage(images.bg, 0, 0);
-
-                pipes.forEach((pipe, index) => {
-                    const pipeUpY = pipe.y;
-                    const pipeBottomY = pipe.y + images.pipeUp.height + gap;
-
-                    ctx.drawImage(images.pipeUp, pipe.x, pipeUpY);
-                    ctx.drawImage(images.pipeBottom, pipe.x, pipeBottomY);
-
-                    if (isGameRunning) pipe.x -= 2;
-
-                    if (pipe.x + pipeWidth <= 0 && isGameRunning) {
-                        pipes.splice(index, 1);
-                        dispatch({ type: 'SET_SCORE', payload: score + 1 });
-                        dispatch({
-                            type: 'SET_PIPES', payload: [
-                                ...pipes,
-                                { x: canvasWidth, y: Math.floor(Math.random() * images.pipeUp.height) - images.pipeUp.height }
-                            ]
-                        });
-                    }
-
-                    if (
-                        birdX + birdSize >= pipe.x &&
-                        birdX <= pipe.x + pipeWidth &&
-                        (birdY <= pipeUpY + images.pipeUp.height || birdY + birdSize >= pipeBottomY) ||
-                        birdY + birdSize >= canvasHeight - images.fg.height ||
-                        birdY <= 0
-                    ) {
-                        dispatch({ type: 'SET_IS_GAME_RUNNING', payload: false });
-                        saveScore(score);
-                    }
-                });
-
-                ctx.drawImage(images.fg, 0, canvasHeight - images.fg.height);
-                ctx.drawImage(images.bird, birdX, birdY);
-
-                ctx.fillStyle = "#000";
-                ctx.font = "24px Arial";
-                ctx.fillText("Счет: " + score, 10, canvasHeight - 20);
-            }
-        };
-
         const interval = setInterval(() => {
             if (isGameRunning) {
                 dispatch({ type: 'SET_VELOCITY', payload: velocity + gravity });
                 dispatch({ type: 'SET_BIRD_Y', payload: birdY + velocity });
             }
-            draw();
+            drawFrame();
         }, 20);
 
         return () => clearInterval(interval);
@@ -196,7 +158,6 @@ const FlappyBird: React.FC<{ userId: string }> = ({ userId }) => {
     const saveScore = async (score: number) => {
         try {
             await axios.post(`${SERVER_URL}/save_score`, { userId, record: score });
-            console.log("Счет успешно сохранен!");
             const response = await axios.get(`${SERVER_URL}/highscores`);
             dispatch({ type: 'SET_HIGH_SCORES', payload: response.data });
         } catch (error) {
