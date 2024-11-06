@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/flappyBir/static/css/main.d8d3480d.css",
+    "main.js": "/flappyBir/static/js/main.59dd1c5c.js",
+    "static/js/453.318e6dba.chunk.js": "/flappyBir/static/js/453.318e6dba.chunk.js",
+    "index.html": "/flappyBir/index.html",
+    "main.d8d3480d.css.map": "/flappyBir/static/css/main.d8d3480d.css.map",
+    "main.59dd1c5c.js.map": "/flappyBir/static/js/main.59dd1c5c.js.map",
+    "453.318e6dba.chunk.js.map": "/flappyBir/static/js/453.318e6dba.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.d8d3480d.css",
+    "static/js/main.59dd1c5c.js"
+  ]
+}
