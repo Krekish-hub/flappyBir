@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/flappyBir/public/static/css/main.d8d3480d.css",
-    "main.js": "/flappyBir/public/static/js/main.3d75d948.js",
+    "main.js": "/flappyBir/public/static/js/main.fc5c0ad3.js",
     "static/js/453.318e6dba.chunk.js": "/flappyBir/public/static/js/453.318e6dba.chunk.js",
     "index.html": "/flappyBir/public/index.html",
     "main.d8d3480d.css.map": "/flappyBir/public/static/css/main.d8d3480d.css.map",
-    "main.3d75d948.js.map": "/flappyBir/public/static/js/main.3d75d948.js.map",
+    "main.fc5c0ad3.js.map": "/flappyBir/public/static/js/main.fc5c0ad3.js.map",
     "453.318e6dba.chunk.js.map": "/flappyBir/public/static/js/453.318e6dba.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.d8d3480d.css",
-    "static/js/main.3d75d948.js"
+    "static/js/main.fc5c0ad3.js"
   ]
 }
